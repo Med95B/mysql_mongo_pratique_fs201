@@ -1,0 +1,190 @@
+CREATE DATABASE GestionClients;
+
+-- Utilisation de la base de données
+USE GestionClients;
+
+-- Création de la table Clients
+CREATE TABLE Clients (
+    ID_Client INT PRIMARY KEY,
+    Nom VARCHAR(255),
+    Email VARCHAR(255),
+    Balance DECIMAL(10, 2)
+);
+
+-- Création de la table Transactions
+CREATE TABLE Transactions (
+    ID_Transaction INT PRIMARY KEY,
+    ID_Client INT,
+    Montant DECIMAL(10, 2),
+    Date DATE,
+    FOREIGN KEY (ID_Client) REFERENCES Clients(ID_Client)
+);
+BEGIN TRANSACTION;
+
+-- Ajout d'un nouveau client
+INSERT INTO Clients (ID_Client, Nom, Email, Balance)
+VALUES (1, 'Nouveau Client', 'nouveauclient@email.com', 0.00);
+
+-- Enregistrement d'une transaction pour le nouveau client
+INSERT INTO Transactions (ID_Transaction, ID_Client, Montant, Date)
+VALUES (1, 1, 100.00, GETDATE());
+
+COMMIT;
+BEGIN TRANSACTION;
+
+-- Mise à jour du solde d'un client existant
+UPDATE Clients
+SET Balance = Balance - 50.00
+WHERE ID_Client = 1;
+
+-- Enregistrement d'une nouvelle transaction pour le client existant
+INSERT INTO Transactions (ID_Transaction, ID_Client, Montant, Date)
+VALUES (2, 1, -50.00, GETDATE());
+
+COMMIT;
+Gelt lik 3ndna 3id milad
+BEGIN TRANSACTION;
+
+-- Mise à jour du solde d'un client existant
+UPDATE Clients
+SET Balance = Balance - 50.00
+WHERE ID_Client = 1;
+
+-- Enregistrement d'une nouvelle transaction pour le client existant
+INSERT INTO Transactions (ID_Transaction, ID_Client, Montant, Date)
+VALUES (2, 1, -50.00, GETDATE());
+
+COMMIT;
+BEGIN TRY
+    BEGIN TRANSACTION;
+
+    -- Opération qui peut entraîner un solde négatif
+    UPDATE Clients
+    SET Balance = Balance - 200.00
+    WHERE ID_Client = 1;
+
+    -- Enregistrement de la transaction
+    INSERT INTO Transactions (ID_Transaction, ID_Client, Montant, Date)
+    VALUES (3, 1, -200.00, GETDATE());
+
+    COMMIT;
+END TRY
+BEGIN CATCH
+    -- Gestion de l'exception
+    PRINT 'Erreur : Le solde du client devient négatif.';
+    ROLLBACK;
+END CATCH;
+BEGIN TRY
+    BEGIN TRANSACTION;
+
+    -- Opération qui viole les contraintes d'intégrité référentielle
+    DELETE FROM Clients
+    WHERE ID_Client = 1;
+
+    COMMIT;
+END TRY
+BEGIN CATCH
+    -- Gestion de l'exception
+    PRINT 'Erreur : Suppression impossible, des transactions sont liées à ce client.';
+    ROLLBACK;
+END CATCH;
+-- Création de la procédure
+DELIMITER //
+
+CREATE PROCEDURE GetClientDataReadOnly()
+BEGIN
+    DECLARE finished INT DEFAULT 0;
+    DECLARE clientCursor CURSOR FOR
+        SELECT Nom, Email, Balance
+        FROM Clients;
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET finished = 1;
+
+    OPEN clientCursor;
+
+    DECLARE v_Nom VARCHAR(255);
+    DECLARE v_Email VARCHAR(255);
+    DECLARE v_Balance DECIMAL(10, 2);
+
+    client_loop: LOOP
+        FETCH clientCursor INTO v_Nom, v_Email, v_Balance;
+        IF finished = 1 THEN
+            LEAVE client_loop;
+        END IF;
+
+        -- Traitement des données (lecture seule)
+        SELECT v_Nom, v_Email, v_Balance;
+    END LOOP;
+
+    CLOSE clientCursor;
+END //
+
+DELIMITER ;
+-- Création de la procédure
+DELIMITER //
+
+CREATE PROCEDURE GetTransactionDataForwardOnly()
+BEGIN
+    DECLARE finished INT DEFAULT 0;
+    DECLARE transactionCursor CURSOR FOR
+        SELECT ID_Transaction, ID_Client, Montant, Date
+        FROM Transactions;
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET finished = 1;
+
+    OPEN transactionCursor;
+
+    DECLARE v_ID_Transaction INT;
+    DECLARE v_ID_Client INT;
+    DECLARE v_Montant DECIMAL(10, 2);
+    DECLARE v_Date DATE;
+
+    transaction_loop: LOOP
+        FETCH transactionCursor INTO v_ID_Transaction, v_ID_Client, v_Montant, v_Date;
+        IF finished = 1 THEN
+            LEAVE transaction_loop;
+        END IF;
+
+        -- Traitement des données (lecture seule)
+        SELECT v_ID_Transaction, v_ID_Client, v_Montant, v_Date;
+    END LOOP;
+
+    CLOSE transactionCursor;
+END //
+
+DELIMITER ;
+-- Création de la procédure
+DELIMITER //
+
+CREATE PROCEDURE GetSensitiveDataAsensitive()
+BEGIN
+    DECLARE finished INT DEFAULT 0;
+    DECLARE current_ID_Client INT;
+    DECLARE current_Solde DECIMAL(10, 2);
+
+    DECLARE sensitiveCursor CURSOR FOR
+        SELECT ID_Client, SUM(Montant) AS Solde
+        FROM Transactions
+        GROUP BY ID_Client;
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET finished = 1;
+
+    OPEN sensitiveCursor;
+
+    DECLARE v_ID_Client INT;
+    DECLARE v_Solde DECIMAL(10, 2);
+
+    sensitive_loop: LOOP
+        FETCH sensitiveCursor INTO v_ID_Client, v_Solde;
+        IF finished = 1 THEN
+            LEAVE sensitive_loop;
+        END IF;
+
+        -- Traitement des données (sensibilité aux modifications dans d'autres transactions)
+        IF current_ID_Client IS NULL OR current_Solde <> v_Solde THEN
+            -- Vous pouvez effectuer des actions ici lorsque les données changent
+            SELECT v_ID_Client, v_Solde;
+            SET current_ID_Client = v_ID_Client;
+            SET current_Solde = v_Solde;
+        END IF;
+    END LOOP;
+
+    CLOSE sensitiveCursor;
+END //
