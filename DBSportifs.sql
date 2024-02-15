@@ -64,7 +64,7 @@ db.getCollection("Sportif").insertMany([
 ])
 
 db.Sportif.find()
-db.Sportif.find({},{'_id':1,'nom':1,'prenom':1})
+db.Sportif.find({},{'_id':0,'nom':1,'prenom':1})
 db.Sportif.find({'genre':'homme'},{'_id':1,'nom':1,'prenom':1,'genre':1})
 db.Sportif.find({'sport.description':'cyclisme'},{'_id':1,'nom':1,'prenom':1,'genre':1,'sport.description':1})
 db.Sportif.find({'sport.olympique':'false'},{'sport.description':1})
@@ -81,6 +81,6 @@ db.getCollection("Sportif").find({"nbMedailles":{$exists:false}},{"nom":1,"preno
 db.getCollection("Sportif").aggregate([{$match:{"sport.description": "cyclisme" }}])
 db.getCollection("Sportif").aggregate([{$group:{_id:"$sport.description",nombre:{$sum:"$nbMedailles"}}}])
 db.getCollection("Sportif").aggregate([{$group:{_id:"$sport.description",maximum: {$max:"$nbMedailles"}}}])
-db.getCollection("Sportif").updateOne({"nom":"Rabii","prenom":"Mohamed"},{$set:{"nbMedailles" :2}})
+db.getCollection("Sportif").updateOne({"nom":"Rabii","prenom":"Mohamed"},{$set:{"nbMedailles":2}})
 db.getCollection("Sportif").updateMany({},{$set:{"nationalite":"marocaine"}})
 db.getCollection("Sportif").remove({"sport.description":"Muay Thai"})
