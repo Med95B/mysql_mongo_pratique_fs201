@@ -1,0 +1,6 @@
+{"_id":"sp1","nom":"Radi","prenom":"Abdessalam","genre":"homme","sport":{"description":"marathon","olympique":"true"},"nationalite":"marocaine","nbMedailles":2}
+{"_id":"sp2","nom":"Larbi","prenom":"Benmbarek","genre":"homme","sport":{"description":"football","olympique":"true"},"nationalite":"marocaine"}
+{"_id":"sp3","nom":"ELGourch","prenom":"Mohamed","genre":"homme","sport":{"description":"cyclisme","olympique":"true"},"nationalite":"marocaine"}
+{"_id":"sp6","nom":"Rabii","prenom":"Mohamed","genre":"homme","sport":{"description":"box","olympique":"true"},"nbMedailles":2,"nationalite":"marocaine"}
+{"_id":"sp7","nom":"elguerrouj","prenom":"Hicham","genre":"homme","sport":{"description":"box","olympique":"true"},"nationalite":"marocaine"}
+{"_id":"sp8","nom":"Abissourour","prenom":"Sara","genre":"femme","sport":{"description":"volley ball","olympique":"true"},"nationalite":"marocaine"}
